@@ -1,0 +1,48 @@
+logging:
+  level:
+    root: info
+    com.example: debug
+server:
+  shutdown: graceful
+spring:
+  application:
+    name: test-debezium
+  output:
+    ansi:
+      enabled: always
+  devtools:
+    add-properties: true
+  lifecycle:
+    timeout-per-shutdown-phase: 5s
+  elasticsearch:
+    uris:
+      - http://localhsot:19200
+      - http://localhsot:19201
+      - http://localhsot:19202
+    connection-timeout: 10s
+    socket-keep-alive: true
+    socket-timeout: 30s
+debezium:
+  connectors:
+    - name: test-alice
+      enable: true
+      connector-class: io.debezium.connector.postgresql.PostgresConnector
+      offset-storage: org.apache.kafka.connect.storage.MemoryOffsetBackingStore
+      plugin-name: pgoutput
+      # 每个逻辑复制槽的名称必须是唯一的
+      slot-name: slot_alice
+      drop-slot-on-stop: false
+      slot-seek-to-known-offset: true
+      publication-name: publication_alice
+      publication-auto-create-mode: all_tables
+      snapshot-mode: initial
+      snapshot-locking-mode: shared
+      topic-prefix: test
+      read-only-connection: true
+      # 事件处理失败处理模式
+      event-processing-failure-handling-mode: fail
+      hostname: localhost
+      port: 5432
+      username: postgres
+      password: 123456
+      database-name: postgres
