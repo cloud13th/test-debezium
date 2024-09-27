@@ -11,7 +11,6 @@ import io.debezium.engine.format.KeyValueHeaderChangeEventFormat;
 import jakarta.annotation.PreDestroy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -30,7 +29,6 @@ import java.util.UUID;
 
 import static io.debezium.connector.postgresql.PostgresConnectorConfig.*;
 import static io.debezium.embedded.EmbeddedEngineConfig.*;
-import static io.debezium.relational.RelationalDatabaseConnectorConfig.DATABASE_EXCLUDE_LIST;
 import static org.springframework.util.StringUtils.hasText;
 
 @Slf4j
@@ -47,27 +45,27 @@ public class DebeziumRegisterRunner implements ApplicationRunner {
     private final DebeziumProperties properties;
 
     private static Configuration buildConfiguration(DebeziumProperties.DebeziumConnector config) {
-        String engineName = getEngineName(config);
-        Configuration.Builder builder = Configuration.create()
+        String engineName = getEngineName(config.getName());
+        Configuration.Builder builder = Configuration.empty().edit()
                 .with(ENGINE_NAME, engineName)
                 .with(CONNECTOR_CLASS, config.getConnectorClass())
-                .with(OFFSET_STORAGE, MemoryOffsetBackingStore.class.getName())
-                // config for connector
-                .with(PLUGIN_NAME, config.getPluginName())
-                .with(SLOT_NAME, hasText(config.getSlotName()) ? config.getSlotName() : engineName)
-                .with(DROP_SLOT_ON_STOP, config.getDropSlotOnStop())
-                .with(SLOT_SEEK_TO_KNOWN_OFFSET, config.getSlotSeekToKnownOffset())
-                .with(PUBLICATION_NAME, config.getPublicationName())
-                .with(PUBLICATION_AUTOCREATE_MODE, config.getPublicationAutoCreateMode())
-                // config for snapshot
-                .with(SNAPSHOT_MODE, config.getSnapshotMode())
-                .with(SNAPSHOT_LOCKING_MODE, config.getSnapshotLockingMode())
+                .with(OFFSET_STORAGE, config.getOffsetStorage())
                 // config for database
-                .with(READ_ONLY_CONNECTION, config.getReadOnlyConnection())
                 .with(HOSTNAME, config.getHostname())
                 .with(PORT, config.getPort())
                 .with(USER, config.getUsername())
                 .with(PASSWORD, config.getPassword())
+                .with(DATABASE_NAME, config.getDatabaseName())
+
+                .with(READ_ONLY_CONNECTION, config.isReadOnlyConnection())
+                .with(PLUGIN_NAME, config.getPluginName())
+                .with(SLOT_NAME, hasText(config.getSlotName()) ? config.getSlotName() : engineName)
+                .with(DROP_SLOT_ON_STOP, config.isDropSlotOnStop())
+                .with(SLOT_SEEK_TO_KNOWN_OFFSET, config.isSlotSeekToKnownOffset())
+                .with(PUBLICATION_NAME, config.getPublicationName() + "_publication")
+                .with(PUBLICATION_AUTOCREATE_MODE, config.getPublicationAutoCreateMode())
+                .with(SNAPSHOT_MODE, config.getSnapshotMode())
+                .with(SNAPSHOT_LOCKING_MODE, config.getSnapshotLockingMode())
                 // config for downstream
                 .with(TOPIC_PREFIX, config.getTopicPrefix())
                 .with(EVENT_PROCESSING_FAILURE_HANDLING_MODE, config.getEventProcessingFailureHandlingMode());
@@ -75,20 +73,6 @@ public class DebeziumRegisterRunner implements ApplicationRunner {
         List<String> streamParams = config.getStreamParams();
         if (!ObjectUtils.isEmpty(streamParams)) {
             builder.with(STREAM_PARAMS, String.join(";", streamParams));
-        }
-
-        if (hasText(config.getDatabaseName())) {
-            builder.with(DATABASE_NAME, config.getDatabaseName());
-        }
-
-        List<String> includeDatabases = config.getIncludeDatabases();
-        List<String> excludeDatabases = config.getExcludeDatabases();
-        if (!ObjectUtils.isEmpty(includeDatabases)) {
-            builder.with(DATABASE_INCLUDE_LIST, String.join(",", includeDatabases));
-        } else {
-            if (!ObjectUtils.isEmpty(excludeDatabases)) {
-                builder.with(DATABASE_EXCLUDE_LIST, String.join(",", excludeDatabases));
-            }
         }
 
         List<String> includeSchemas = config.getIncludeSchemas();
@@ -114,9 +98,9 @@ public class DebeziumRegisterRunner implements ApplicationRunner {
         return builder.build();
     }
 
-    private static String getEngineName(DebeziumProperties.DebeziumConnector config) {
+    private static String getEngineName(String name) {
         String uuid = UUID.randomUUID().toString().replace("-", "");
-        return hasText(config.getName()) ? config.getName() : uuid;
+        return hasText(name) ? name : uuid;
     }
 
     @Override
