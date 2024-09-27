@@ -1,5 +1,6 @@
-package com.example.debezium.config;
+package com.example.debezium.config.init;
 
+import com.example.debezium.config.DebeziumProperties;
 import com.example.debezium.handler.IDebeziumEventHandler;
 import io.debezium.config.Configuration;
 import io.debezium.embedded.async.ConvertingAsyncEngineBuilderFactory;
@@ -14,6 +15,7 @@ import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -33,6 +35,7 @@ import static org.springframework.util.StringUtils.hasText;
 
 @Slf4j
 @Component
+@Order(value = 10_0000)
 @AllArgsConstructor
 public class DebeziumRegisterRunner implements ApplicationRunner {
 

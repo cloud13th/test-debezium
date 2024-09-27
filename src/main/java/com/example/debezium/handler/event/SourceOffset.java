@@ -1,6 +1,6 @@
-package com.example.debezium.model;
+package com.example.debezium.handler.event;
 
-import com.example.debezium.model.enums.MessageType;
+import com.example.debezium.handler.event.enums.MessageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 

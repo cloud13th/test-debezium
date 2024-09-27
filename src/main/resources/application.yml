@@ -1,7 +1,9 @@
 logging:
   level:
     root: info
-    com.example: debug
+    com.example: trace
+#    io.debezium: debug
+    org.springframework.data.elasticsearch: debug
 server:
   shutdown: graceful
 spring:
@@ -16,9 +18,9 @@ spring:
     timeout-per-shutdown-phase: 5s
   elasticsearch:
     uris:
-      - http://localhsot:19200
-      - http://localhsot:19201
-      - http://localhsot:19202
+      - http://localhost:19200
+      - http://localhost:19201
+      - http://localhost:19202
     connection-timeout: 10s
     socket-keep-alive: true
     socket-timeout: 30s

@@ -1,4 +1,4 @@
-package com.example.debezium.model.enums;
+package com.example.debezium.handler.event.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
