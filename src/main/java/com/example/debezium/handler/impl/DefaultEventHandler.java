@@ -6,7 +6,7 @@ import com.example.debezium.handler.event.EventMessageValue;
 import com.example.debezium.handler.event.enums.OperationType;
 import com.example.debezium.service.IElasticsearchService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.debezium.embedded.EmbeddedEngineChangeEvent;
+import io.debezium.engine.ChangeEvent;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class DefaultEventHandler implements IDebeziumEventHandler {
 
     @SneakyThrows
     @Override
-    public void handle(EmbeddedEngineChangeEvent<String, String, String> event) {
+    public void handle(ChangeEvent<byte[], byte[]> event) {
         log.info("{} >>> {}", INDEX.incrementAndGet(), event);
 
         EventMessageKey key = mapper.readValue(event.key(), EventMessageKey.class);

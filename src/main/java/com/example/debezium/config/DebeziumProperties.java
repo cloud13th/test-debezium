@@ -1,6 +1,7 @@
 package com.example.debezium.config;
 
 import io.debezium.config.CommonConnectorConfig;
+import io.debezium.connector.postgresql.PostgresConnector;
 import io.debezium.connector.postgresql.PostgresConnectorConfig;
 import lombok.Data;
 import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
@@ -20,28 +21,32 @@ public class DebeziumProperties {
 
     @Data
     public static class DebeziumConnector {
-        private final boolean enable = true;
         private String name;
-        private String connectorClass;
-        private final String offsetStorage = MemoryOffsetBackingStore.class.getName();
-        private final String pluginName = PostgresConnectorConfig.LogicalDecoder.PGOUTPUT.getValue();
         private String slotName;
-        private final boolean dropSlotOnStop = false;
-        private final boolean slotSeekToKnownOffset = false;
         private String publicationName;
-        private final String publicationAutoCreateMode = PostgresConnectorConfig.AutoCreateMode.ALL_TABLES.getValue();
-        private final String snapshotMode = PostgresConnectorConfig.SnapshotMode.INITIAL.getValue();
-        private final String snapshotLockingMode = PostgresConnectorConfig.SnapshotLockingMode.NONE.getValue();
-        private List<String> streamParams;
         private String topicPrefix;
-        private final boolean readOnlyConnection = true;
-        private final String eventProcessingFailureHandlingMode = CommonConnectorConfig.EventProcessingFailureHandlingMode.WARN.getValue();
+        private List<String> streamParams;
+        private Boolean readOnlyConnection = true;
+        private Boolean enable = true;
+        private String connectorClass = PostgresConnector.class.getName();
+        private String offsetStorage = MemoryOffsetBackingStore.class.getName();
+        private String pluginName = PostgresConnectorConfig.LogicalDecoder.PGOUTPUT.getValue();
+        private Boolean dropSlotOnStop = false;
+        private Boolean slotSeekToKnownOffset = false;
+        private String publicationAutoCreateMode = PostgresConnectorConfig.AutoCreateMode.ALL_TABLES.getValue();
+        private String snapshotMode = PostgresConnectorConfig.SnapshotMode.INITIAL.getValue();
+        private String snapshotLockingMode = PostgresConnectorConfig.SnapshotLockingMode.SHARED.getValue();
+        private String eventProcessingFailureHandlingMode = CommonConnectorConfig.EventProcessingFailureHandlingMode.WARN.getValue();
+        private DebeziumDatabaseConnector database = new DebeziumDatabaseConnector();
+    }
 
-        private String hostname;
-        private String port;
-        private String username;
+    @Data
+    public static class DebeziumDatabaseConnector {
+        private String hostname = "localhost";
+        private String port = "5432";
+        private String name = "postgres";
+        private String user;
         private String password;
-        private String databaseName;
         private List<String> includeSchemas; // databaseName.schemaName
         private List<String> excludeSchemas; // databaseName.schemaName
         private List<String> includeTables; // databaseName.schemaName.tableName

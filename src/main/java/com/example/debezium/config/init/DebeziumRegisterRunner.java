@@ -6,7 +6,7 @@ import io.debezium.config.Configuration;
 import io.debezium.embedded.async.ConvertingAsyncEngineBuilderFactory;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
-import io.debezium.engine.format.Json;
+import io.debezium.engine.format.JsonByteArray;
 import io.debezium.engine.format.KeyValueHeaderChangeEventFormat;
 import jakarta.annotation.PreDestroy;
 import lombok.AllArgsConstructor;
@@ -15,6 +15,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.Order;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -37,12 +38,12 @@ import static org.springframework.util.StringUtils.hasText;
 @AllArgsConstructor
 public class DebeziumRegisterRunner implements ApplicationRunner {
 
-    private static final List<DebeziumEngine<ChangeEvent<String, String>>> DEBEZIUM_ENGINES = Collections.synchronizedList(new ArrayList<>());
-    private static final Clock CLOCK = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+    private static final List<DebeziumEngine<ChangeEvent<byte[], byte[]>>> DEBEZIUM_ENGINES = Collections.synchronizedList(new ArrayList<>());
 
     private final List<IDebeziumEventHandler> eventHandlers;
     private final ConfigurableApplicationContext applicationContext;
     private final DebeziumProperties properties;
+    private final MessageChannel debeziumChannel;
 
     private static Configuration buildConfiguration(DebeziumProperties.DebeziumConnector config) {
         String engineName = getEngineName(config.getName());
@@ -50,18 +51,11 @@ public class DebeziumRegisterRunner implements ApplicationRunner {
                 .with(ENGINE_NAME, engineName)
                 .with(CONNECTOR_CLASS, config.getConnectorClass())
                 .with(OFFSET_STORAGE, config.getOffsetStorage())
-                // config for database
-                .with(HOSTNAME, config.getHostname())
-                .with(PORT, config.getPort())
-                .with(USER, config.getUsername())
-                .with(PASSWORD, config.getPassword())
-                .with(DATABASE_NAME, config.getDatabaseName())
-
-                .with(READ_ONLY_CONNECTION, config.isReadOnlyConnection())
+                .with(READ_ONLY_CONNECTION, config.getReadOnlyConnection())
                 .with(PLUGIN_NAME, config.getPluginName())
                 .with(SLOT_NAME, hasText(config.getSlotName()) ? config.getSlotName() : engineName)
-                .with(DROP_SLOT_ON_STOP, config.isDropSlotOnStop())
-                .with(SLOT_SEEK_TO_KNOWN_OFFSET, config.isSlotSeekToKnownOffset())
+                .with(DROP_SLOT_ON_STOP, config.getDropSlotOnStop())
+                .with(SLOT_SEEK_TO_KNOWN_OFFSET, config.getSlotSeekToKnownOffset())
                 .with(PUBLICATION_NAME, config.getPublicationName() + "_publication")
                 .with(PUBLICATION_AUTOCREATE_MODE, config.getPublicationAutoCreateMode())
                 .with(SNAPSHOT_MODE, config.getSnapshotMode())
@@ -70,28 +64,38 @@ public class DebeziumRegisterRunner implements ApplicationRunner {
                 .with(TOPIC_PREFIX, config.getTopicPrefix())
                 .with(EVENT_PROCESSING_FAILURE_HANDLING_MODE, config.getEventProcessingFailureHandlingMode());
 
-        List<String> streamParams = config.getStreamParams();
-        if (!ObjectUtils.isEmpty(streamParams)) {
-            builder.with(STREAM_PARAMS, String.join(";", streamParams));
+        List<String> params = config.getStreamParams();
+        if (!ObjectUtils.isEmpty(params)) {
+            builder.with(STREAM_PARAMS, String.join(";", params));
         }
 
-        List<String> includeSchemas = config.getIncludeSchemas();
-        List<String> excludeSchemas = config.getExcludeSchemas();
-        if (!ObjectUtils.isEmpty(includeSchemas)) {
-            builder.with(SCHEMA_INCLUDE_LIST, String.join(",", includeSchemas));
-        } else {
-            if (!ObjectUtils.isEmpty(excludeSchemas)) {
-                builder.with(SCHEMA_EXCLUDE_LIST, String.join(",", excludeSchemas));
+        DebeziumProperties.DebeziumDatabaseConnector database = config.getDatabase();
+        if (!ObjectUtils.isEmpty(database)) {
+            // config for database
+            builder.with(HOSTNAME, database.getHostname())
+                    .with(PORT, database.getPort())
+                    .with(USER, database.getUser())
+                    .with(PASSWORD, database.getPassword())
+                    .with(DATABASE_NAME, database.getName());
+            // config for schemas
+            List<String> includeSchemas = database.getIncludeSchemas();
+            List<String> excludeSchemas = database.getExcludeSchemas();
+            if (!ObjectUtils.isEmpty(includeSchemas)) {
+                builder.with(SCHEMA_INCLUDE_LIST, String.join(",", includeSchemas));
+            } else {
+                if (!ObjectUtils.isEmpty(excludeSchemas)) {
+                    builder.with(SCHEMA_EXCLUDE_LIST, String.join(",", excludeSchemas));
+                }
             }
-        }
-
-        List<String> includeTables = config.getIncludeTables();
-        List<String> excludeTables = config.getExcludeTables();
-        if (!ObjectUtils.isEmpty(includeTables)) {
-            builder.with(TABLE_INCLUDE_LIST, String.join(",", includeTables));
-        } else {
-            if (!ObjectUtils.isEmpty(excludeTables)) {
-                builder.with(TABLE_EXCLUDE_LIST, String.join(",", excludeTables));
+            // config for tables
+            List<String> includeTables = database.getIncludeTables();
+            List<String> excludeTables = database.getExcludeTables();
+            if (!ObjectUtils.isEmpty(includeTables)) {
+                builder.with(TABLE_INCLUDE_LIST, String.join(",", includeTables));
+            } else {
+                if (!ObjectUtils.isEmpty(excludeTables)) {
+                    builder.with(TABLE_EXCLUDE_LIST, String.join(",", excludeTables));
+                }
             }
         }
 
@@ -105,29 +109,47 @@ public class DebeziumRegisterRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        this.executeDebeziumEngines();
+    }
+
+    private void executeDebeziumEngines() {
         for (DebeziumProperties.DebeziumConnector config : properties.getConnectors()) {
             log.info("Registering Debezium engine for connector...");
-            if (!config.isEnable()) {
+            if (!config.getEnable()) {
                 log.debug("Debezium engine disabled: {}", config);
                 continue;
             }
             log.debug("Config >>> {}", config);
-            DebeziumEngine<ChangeEvent<String, String>> engine = this.buildDebeziumEngine(config);
+            DebeziumEngine<ChangeEvent<byte[], byte[]>> engine = this.buildDebeziumEngine(config);
+
+
             applicationContext.getBeanFactory().registerSingleton(config.getName(), engine);
             engine.run();
             log.debug("Success >>> {}", engine);
         }
     }
 
-    private DebeziumEngine<ChangeEvent<String, String>> buildDebeziumEngine(DebeziumProperties.DebeziumConnector config) {
+//    private DebeziumEngine<ChangeEvent<String, String>> buildDebeziumEngines(DebeziumProperties.DebeziumConnector config) {
+//        Configuration configuration = buildConfiguration(config);
+//        DebeziumEngine.Builder<ChangeEvent<byte[], byte[]>> builder = DebeziumEngine.create(
+//                        KeyValueHeaderChangeEventFormat.of(Protobuf.class, Protobuf.class, Protobuf.class),
+//                        ConvertingAsyncEngineBuilderFactory.class.getName())
+//                .using(configuration.asProperties())
+//                .using(CLOCK);
+//        DebeziumMessageProducer producer = new DebeziumMessageProducer(builder);
+//        producer.setApplicationContext(applicationContext);
+//        producer.setOutputChannel(debeziumChannel);
+//        return producer;
+//    }
+
+    private DebeziumEngine<ChangeEvent<byte[], byte[]>> buildDebeziumEngine(DebeziumProperties.DebeziumConnector config) {
         Configuration configuration = buildConfiguration(config);
-        DebeziumEngine<ChangeEvent<String, String>> engine = DebeziumEngine.create(
-                        KeyValueHeaderChangeEventFormat.of(Json.class, Json.class, Json.class),
+        DebeziumEngine<ChangeEvent<byte[], byte[]>> engine = DebeziumEngine.create(
+                        KeyValueHeaderChangeEventFormat.of(JsonByteArray.class, JsonByteArray.class, JsonByteArray.class),
                         ConvertingAsyncEngineBuilderFactory.class.getName())
                 .using(configuration.asProperties())
                 .using(this.getClass().getClassLoader())
-                .using(CLOCK)
-                .notifying(event -> eventHandlers.forEach(eventHandler -> eventHandler.handleEvent(event)))
+                .notifying(event -> eventHandlers.forEach(eventHandler -> eventHandler.handle(event)))
                 .build();
         DEBEZIUM_ENGINES.add(engine);
         return engine;
@@ -135,7 +157,7 @@ public class DebeziumRegisterRunner implements ApplicationRunner {
 
     @PreDestroy
     public void destroy() {
-        for (DebeziumEngine<ChangeEvent<String, String>> engine : DEBEZIUM_ENGINES) {
+        for (DebeziumEngine<ChangeEvent<byte[], byte[]>> engine : DEBEZIUM_ENGINES) {
             if (!ObjectUtils.isEmpty(engine)) {
                 try {
                     engine.close();
