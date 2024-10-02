@@ -26,13 +26,13 @@ public class DebeziumProperties {
         private String publicationName;
         private String topicPrefix;
         private List<String> streamParams;
-        private Boolean readOnlyConnection = true;
-        private Boolean enable = true;
+        private Boolean readOnlyConnection = Boolean.TRUE;
+        private boolean enable = Boolean.TRUE;
         private String connectorClass = PostgresConnector.class.getName();
         private String offsetStorage = MemoryOffsetBackingStore.class.getName();
         private String pluginName = PostgresConnectorConfig.LogicalDecoder.PGOUTPUT.getValue();
-        private Boolean dropSlotOnStop = false;
-        private Boolean slotSeekToKnownOffset = false;
+        private Boolean dropSlotOnStop = Boolean.FALSE;
+        private Boolean slotSeekToKnownOffset = Boolean.FALSE;
         private String publicationAutoCreateMode = PostgresConnectorConfig.AutoCreateMode.ALL_TABLES.getValue();
         private String snapshotMode = PostgresConnectorConfig.SnapshotMode.INITIAL.getValue();
         private String snapshotLockingMode = PostgresConnectorConfig.SnapshotLockingMode.SHARED.getValue();

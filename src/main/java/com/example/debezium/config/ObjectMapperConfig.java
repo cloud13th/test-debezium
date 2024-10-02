@@ -9,12 +9,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.integration.channel.DirectChannel;
-import org.springframework.messaging.MessageChannel;
 
 @Configuration
 @AllArgsConstructor
-public class CommonConfig {
+public class ObjectMapperConfig {
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -30,10 +28,5 @@ public class CommonConfig {
         // 将所有时间都转为时间戳
         mapper.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
-    }
-
-    @Bean
-    public MessageChannel debeziumChannel() {
-        return new DirectChannel();
     }
 }

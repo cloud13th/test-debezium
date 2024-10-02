@@ -24,6 +24,18 @@ spring:
     connection-timeout: 10s
     socket-keep-alive: true
     socket-timeout: 30s
+  data:
+    redis:
+      database: 0
+      host: localhost
+      port: 6379
+      password: 123456
+      ssl:
+        enabled: false
+      timeout: 10s
+      connection-timeout: 10s
+      client-name: test-debezium
+
 debezium:
   connectors:
     - name: test-alice
@@ -31,6 +43,7 @@ debezium:
       publication-name: publication_alice
       topic-prefix: test
       read-only-connection: true
+      offset-storage: com.example.debezium.config.offset.RedisOffsetBackingStore
       database:
         user: postgres
         password: 123456

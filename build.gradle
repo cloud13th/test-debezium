@@ -27,12 +27,14 @@ repositories {
 ext {
     debeziumVersion = "2.7.3.Final"
     springIntegrationVersion = "6.3.4"
+    redissonVersion = "3.36.0"
 }
 
 dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.springframework.boot:spring-boot-starter-validation"
     implementation "org.springframework.boot:spring-boot-starter-data-elasticsearch"
+    implementation "org.redisson:redisson-spring-boot-starter:${redissonVersion}"
     implementation "org.springframework.integration:spring-integration-debezium:${springIntegrationVersion}"
     implementation "io.debezium:debezium-embedded:${debeziumVersion}"
     implementation "io.debezium:debezium-connector-postgres:${debeziumVersion}"

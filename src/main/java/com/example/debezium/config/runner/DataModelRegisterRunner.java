@@ -1,4 +1,4 @@
-package com.example.debezium.config.init;
+package com.example.debezium.config.runner;
 
 import com.example.debezium.model.IDataModel;
 import com.example.debezium.utils.TableDefinitionUtils;
