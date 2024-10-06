@@ -19,6 +19,7 @@ public class ObjectMapperConfig {
         ObjectMapper mapper = new ObjectMapper();
         // 忽略未识别的字段
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         // 序列化时忽略null值
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         // 蛇型命名和驼峰命名互相转换

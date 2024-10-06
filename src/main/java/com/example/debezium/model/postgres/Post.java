@@ -10,19 +10,27 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@TableDefinition(database = "debezium", table = "customer")
-@Document(indexName = "customer")
-public class Customer implements IDataModel {
+@TableDefinition(database = "debezium", table = "post")
+@Document(indexName = "post")
+public class Post implements IDataModel {
 
     @Id
     private String id;
 
-    private String name;
+    private String title;
 
-    private Integer age;
+    private String author;
+
+    private String content;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
+    private Long postTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
     private Long createTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSS")
+    private Long updateTime;
 
     private Boolean deleted;
 

@@ -23,7 +23,6 @@ public final class DebeziumUtils {
         Configuration.Builder builder = Configuration.empty().edit()
                 .with(ENGINE_NAME, engineName)
                 .with(CONNECTOR_CLASS, config.getConnectorClass())
-                .with(OFFSET_STORAGE, config.getOffsetStorage())
                 .with(READ_ONLY_CONNECTION, config.getReadOnlyConnection())
                 .with(PLUGIN_NAME, config.getPluginName())
                 .with(SLOT_NAME, hasText(config.getSlotName()) ? config.getSlotName() : engineName)
@@ -71,6 +70,9 @@ public final class DebeziumUtils {
                 }
             }
         }
+
+        builder.with(OFFSET_STORAGE, config.getOffsetStorage());
+        builder.with(OFFSET_STORAGE_FILE_FILENAME, config.getOffsetStorageFile());
 
         return builder.build();
     }

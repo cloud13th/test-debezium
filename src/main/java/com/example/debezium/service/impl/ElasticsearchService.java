@@ -9,12 +9,13 @@ import com.example.debezium.service.IElasticsearchService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+
+import java.io.IOException;
 
 import static com.example.debezium.config.runner.DataModelRegisterRunner.DATA_MODEL_MAP;
 import static org.springframework.util.StringUtils.hasText;
@@ -58,8 +59,7 @@ public class ElasticsearchService implements IElasticsearchService {
         }
     }
 
-    @SneakyThrows
-    private void handleData(OperationType operation, String table, String id, String data) {
+    private void handleData(OperationType operation, String table, String id, String data) throws IOException {
         var index = table.substring(table.lastIndexOf(".") + 1);
         var document = Document.parse(data);
         switch (operation) {

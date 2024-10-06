@@ -7,20 +7,12 @@ logging:
 server:
   shutdown: graceful
 spring:
-  application:
-    name: test-debezium
   output:
     ansi:
       enabled: always
-  devtools:
-    add-properties: true
-  lifecycle:
-    timeout-per-shutdown-phase: 5s
   elasticsearch:
     uris:
       - http://localhost:19200
-      - http://localhost:19201
-      - http://localhost:19202
     connection-timeout: 10s
     socket-keep-alive: true
     socket-timeout: 30s
@@ -28,13 +20,10 @@ spring:
     redis:
       database: 0
       host: localhost
-      port: 6379
+      port: 16379
       password: 123456
-      ssl:
-        enabled: false
       timeout: 10s
-      connection-timeout: 10s
-      client-name: test-debezium
+      connect-timeout: 10s
 
 debezium:
   connectors:
@@ -43,7 +32,10 @@ debezium:
       publication-name: publication_alice
       topic-prefix: test
       read-only-connection: true
-      offset-storage: com.example.debezium.config.offset.RedisOffsetBackingStore
+      offset-storage-file: sd
       database:
+        hostname: localhost
+        port: 15432
+        name: debezium
         user: postgres
         password: 123456

@@ -1,0 +1,54 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    ports:
+      - '15432:5432'
+    mem_limit: 500m
+    cpus: '1.0'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: debezium
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    volumes:
+      - ./scripts/postgres.conf:/etc/postgresql/postgresql.conf
+      - ./scripts/init_data.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U postgres' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - '16379:6379'
+    mem_limit: 64m
+    cpus: '0.5'
+    command: redis-server --requirepass 123456 --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.1
+    ports:
+      - '19200:9200'
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl localhost:9200/_cluster/health' ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  bridge:

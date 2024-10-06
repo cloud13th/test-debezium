@@ -4,7 +4,7 @@ import io.debezium.config.CommonConnectorConfig;
 import io.debezium.connector.postgresql.PostgresConnector;
 import io.debezium.connector.postgresql.PostgresConnectorConfig;
 import lombok.Data;
-import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
+import org.apache.kafka.connect.storage.FileOffsetBackingStore;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -29,7 +29,8 @@ public class DebeziumProperties {
         private Boolean readOnlyConnection = Boolean.TRUE;
         private boolean enable = Boolean.TRUE;
         private String connectorClass = PostgresConnector.class.getName();
-        private String offsetStorage = MemoryOffsetBackingStore.class.getName();
+        private String offsetStorage = FileOffsetBackingStore.class.getName();
+        private String offsetStorageFile;
         private String pluginName = PostgresConnectorConfig.LogicalDecoder.PGOUTPUT.getValue();
         private Boolean dropSlotOnStop = Boolean.FALSE;
         private Boolean slotSeekToKnownOffset = Boolean.FALSE;

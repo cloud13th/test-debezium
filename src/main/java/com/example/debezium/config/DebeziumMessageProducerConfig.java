@@ -20,8 +20,8 @@ import java.util.List;
 import static com.example.debezium.utils.DebeziumUtils.buildConfiguration;
 
 @Slf4j
-//@org.springframework.context.annotation.Configuration
 @AllArgsConstructor
+@org.springframework.context.annotation.Configuration
 public class DebeziumMessageProducerConfig {
 
     private final ConfigurableApplicationContext applicationContext;
@@ -30,6 +30,11 @@ public class DebeziumMessageProducerConfig {
     @Bean
     MessageChannel debeziumInputChannel() {
         return new DirectChannel();
+    }
+
+    @ServiceActivator(inputChannel = "debeziumInputChannel")
+    void handler(List<ChangeEvent<Object, Object>> payload) {
+        log.trace("payload >>> {}", payload);
     }
 
     MessageProducer messageProducer() {
@@ -61,10 +66,5 @@ public class DebeziumMessageProducerConfig {
         var eventFormat = KeyValueHeaderChangeEventFormat.of(Protobuf.class, Protobuf.class, Protobuf.class);
         return DebeziumEngine.create(eventFormat, ConvertingAsyncEngineBuilderFactory.class.getName())
                 .using(configuration.asProperties());
-    }
-
-    @ServiceActivator(inputChannel = "debeziumInputChannel")
-    public void handler(List<ChangeEvent<Object, Object>> payload) {
-        log.trace("payload >>> {}", payload);
     }
 }
