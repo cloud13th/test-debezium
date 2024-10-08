@@ -41,6 +41,13 @@ public final class DebeziumUtils {
             builder.with(STREAM_PARAMS, String.join(";", params));
         }
 
+        buildDatabaseConfig(config, builder);
+        buildOffsetBackingStore(config, builder);
+
+        return builder.build();
+    }
+
+    private static void buildDatabaseConfig(DebeziumProperties.DebeziumConnector config, Configuration.Builder builder) {
         DebeziumProperties.DebeziumDatabaseConnector database = config.getDatabase();
         if (!ObjectUtils.isEmpty(database)) {
             // config for database
@@ -70,11 +77,14 @@ public final class DebeziumUtils {
                 }
             }
         }
+    }
 
+    private static void buildOffsetBackingStore(DebeziumProperties.DebeziumConnector config, Configuration.Builder builder) {
         builder.with(OFFSET_STORAGE, config.getOffsetStorage());
-        builder.with(OFFSET_STORAGE_FILE_FILENAME, config.getOffsetStorageFile());
-
-        return builder.build();
+        String offsetStorageFile = config.getOffsetStorageFile();
+        if (hasText(offsetStorageFile)) {
+            builder.with(OFFSET_STORAGE_FILE_FILENAME, offsetStorageFile);
+        }
     }
 
     private static String getEngineName(String name) {
