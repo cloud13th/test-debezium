@@ -30,6 +30,10 @@ public class ElasticsearchService implements IElasticsearchService {
     private final ElasticsearchClient client;
 
     public void process(OperationType operation, String table, String id, String data) {
+        // redis
+
+        // 加数据模型
+
         log.trace("Elasticsearch Process: {} {} {} {}", operation, table, id, data);
         IDataModel dataModel = DATA_MODEL_MAP.getOrDefault(table, null);
         if (ObjectUtils.isEmpty(dataModel)) {

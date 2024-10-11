@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @AllArgsConstructor
 @SpringBootApplication
-public class DebeziumSyncApplication {
+public class DebeziumCDCApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DebeziumSyncApplication.class, args);
+        SpringApplication.run(DebeziumCDCApplication.class, args);
     }
 }

@@ -2,9 +2,10 @@ logging:
   level:
     root: info
     com.example: trace
-    io.debezium.embedded.async: debug
-    org.springframework.data.elasticsearch: debug
+    io.debezium.engine: debug
+    org.springframework.integration.debezium: trace
 server:
+  port: 9090
   shutdown: graceful
 spring:
   output:
@@ -13,12 +14,9 @@ spring:
   elasticsearch:
     uris:
       - http://localhost:19200
-    connection-timeout: 10s
-    socket-keep-alive: true
-    socket-timeout: 30s
   data:
     redis:
-      database: 0
+      database: 1
       host: localhost
       port: 16379
       password: 123456
@@ -27,15 +25,31 @@ spring:
 
 debezium:
   connectors:
-    - name: test-alice
-      slot-name: slot_alice
-      publication-name: publication_alice
-      topic-prefix: test
-      read-only-connection: true
-      offset-storage-file: sd
+    - name: task_customer_dev
+      offset:
+        address: localhost:16379
+        database: 1
+        password: 123456
+        key: task_customer_dev
       database:
         hostname: localhost
         port: 15432
-        name: debezium
+        name: customer_dev
         user: postgres
         password: 123456
+        include-tables:
+          - customer_dev.public.customer
+    - name: task_post_dev
+      offset:
+        address: localhost:16379
+        database: 1
+        password: 123456
+        key: task_post_dev
+      database:
+        hostname: localhost
+        port: 15432
+        name: post_dev
+        user: postgres
+        password: 123456
+        include-tables:
+          - post_dev.public.post

@@ -34,7 +34,7 @@ public class DebeziumEnginesRunner implements ApplicationRunner {
     private static final List<DebeziumEngine<ChangeEvent<byte[], byte[]>>> DEBEZIUM_ENGINES = Collections.synchronizedList(new ArrayList<>());
 
     private final List<IDebeziumEventHandler> eventHandlers;
-    private final ConfigurableApplicationContext applicationContext;
+    private final ConfigurableApplicationContext context;
     private final DebeziumProperties properties;
 
     @Override
@@ -51,7 +51,7 @@ public class DebeziumEnginesRunner implements ApplicationRunner {
             }
             log.debug("Config >>> {}", config);
             DebeziumEngine<ChangeEvent<byte[], byte[]>> engine = this.buildDebeziumEngine(config);
-            applicationContext.getBeanFactory().registerSingleton(config.getName(), engine);
+            context.getBeanFactory().registerSingleton(config.getName(), engine);
             engine.run();
             log.debug("Success >>> {}", engine);
         }
